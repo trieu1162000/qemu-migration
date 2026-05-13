@@ -1,0 +1,132 @@
+top - 15:44:19 up 14 min,  2 users,  load average: 0.03, 0.01, 0.00
+Tasks: 118 total,   1 running, 117 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.0 us,  0.0 sy,  0.0 ni,100.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st 
+MiB Mem :   3915.2 total,    237.5 free,   3684.2 used,   3191.0 buff/cache     
+MiB Swap:   2991.0 total,   2956.8 free,     34.2 used.    231.0 avail Mem 
+
+    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
+      1 root      20   0   21832  13004   9512 S   0.0   0.3   0:00.88 systemd
+      2 root      20   0       0      0      0 S   0.0   0.0   0:00.00 kthreadd
+      3 root      20   0       0      0      0 S   0.0   0.0   0:00.00 pool_wo+
+      4 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+      5 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+      6 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+      7 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+      9 root      20   0       0      0      0 I   0.0   0.0   0:00.27 kworker+
+     10 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     11 root      20   0       0      0      0 I   0.0   0.0   0:00.51 kworker+
+     12 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     13 root      20   0       0      0      0 I   0.0   0.0   0:00.00 rcu_tas+
+     14 root      20   0       0      0      0 I   0.0   0.0   0:00.00 rcu_tas+
+     15 root      20   0       0      0      0 I   0.0   0.0   0:00.00 rcu_tas+
+     16 root      20   0       0      0      0 S   0.0   0.0   0:00.00 ksoftir+
+     17 root      20   0       0      0      0 I   0.0   0.0   0:00.02 rcu_pre+
+     18 root      rt   0       0      0      0 S   0.0   0.0   0:00.00 migrati+
+     19 root     -51   0       0      0      0 S   0.0   0.0   0:00.00 idle_in+
+     20 root      20   0       0      0      0 S   0.0   0.0   0:00.00 cpuhp/0
+     21 root      20   0       0      0      0 S   0.0   0.0   0:00.00 cpuhp/1
+     22 root     -51   0       0      0      0 S   0.0   0.0   0:00.00 idle_in+
+     23 root      rt   0       0      0      0 S   0.0   0.0   0:00.41 migrati+
+     24 root      20   0       0      0      0 S   0.0   0.0   0:00.00 ksoftir+
+     25 root      20   0       0      0      0 I   0.0   0.0   0:00.03 kworker+
+     26 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     27 root      20   0       0      0      0 S   0.0   0.0   0:00.00 cpuhp/2
+     28 root     -51   0       0      0      0 S   0.0   0.0   0:00.00 idle_in+
+     29 root      rt   0       0      0      0 S   0.0   0.0   0:00.41 migrati+
+     30 root      20   0       0      0      0 S   0.0   0.0   0:00.00 ksoftir+
+     31 root      20   0       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     32 root       0 -20       0      0      0 I   0.0   0.0   0:00.96 kworker+
+     33 root      20   0       0      0      0 S   0.0   0.0   0:00.00 cpuhp/3
+     34 root     -51   0       0      0      0 S   0.0   0.0   0:00.00 idle_in+
+     35 root      rt   0       0      0      0 S   0.0   0.0   0:00.41 migrati+
+     36 root      20   0       0      0      0 S   0.0   0.0   0:00.00 ksoftir+
+     39 root      20   0       0      0      0 S   0.0   0.0   0:00.00 kdevtmp+
+     40 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     41 root      20   0       0      0      0 S   0.0   0.0   0:00.00 kauditd
+     42 root      20   0       0      0      0 S   0.0   0.0   0:00.00 khungta+
+     43 root      20   0       0      0      0 S   0.0   0.0   0:00.00 oom_rea+
+     44 root      20   0       0      0      0 I   0.0   0.0   0:00.16 kworker+
+     46 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     47 root      20   0       0      0      0 S   0.0   0.0   0:00.02 kcompac+
+     48 root      25   5       0      0      0 S   0.0   0.0   0:00.00 ksmd
+     50 root      39  19       0      0      0 S   0.0   0.0   0:00.00 khugepa+
+     51 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     52 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     53 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     54 root     -51   0       0      0      0 S   0.0   0.0   0:00.00 irq/9-a+
+     57 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     58 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     59 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     60 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     61 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     62 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     63 root     -51   0       0      0      0 S   0.0   0.0   0:00.00 watchdo+
+     64 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     65 root       0 -20       0      0      0 I   0.0   0.0   0:00.07 kworker+
+     66 root      20   0       0      0      0 S   0.0   0.0   0:00.05 kswapd0
+     67 root      20   0       0      0      0 S   0.0   0.0   0:00.00 ecryptf+
+     68 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     69 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     70 root      20   0       0      0      0 S   0.0   0.0   0:00.00 scsi_eh+
+     71 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     72 root      20   0       0      0      0 S   0.0   0.0   0:00.04 scsi_eh+
+     73 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     75 root      20   0       0      0      0 I   0.0   0.0   0:00.08 kworker+
+     76 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     77 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     85 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     87 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     92 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+     93 root       0 -20       0      0      0 I   0.0   0.0   0:00.07 kworker+
+     94 root       0 -20       0      0      0 I   0.0   0.0   0:00.03 kworker+
+    104 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+    157 root      20   0       0      0      0 I   0.0   0.0   0:00.04 kworker+
+    178 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+    191 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+    217 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+    261 root      20   0       0      0      0 S   0.0   0.0   0:00.06 jbd2/dm+
+    262 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+    314 root      19  -1   50368  16212  15104 S   0.0   0.4   0:00.12 systemd+
+    338 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+    339 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+    358 root      20   0       0      0      0 I   0.0   0.0   0:00.01 kworker+
+    368 root      rt   0  289120  27456   8760 S   0.0   0.7   0:00.13 multipa+
+    389 root      20   0   28296   6972   4924 S   0.0   0.2   0:00.07 systemd+
+    395 root      -2   0       0      0      0 S   0.0   0.0   0:00.00 psimon
+    406 systemd+  20   0   19012   9464   8304 S   0.0   0.2   0:00.02 systemd+
+    444 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+    483 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+    523 root      20   0       0      0      0 S   0.0   0.0   0:00.00 jbd2/sd+
+    524 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+    525 root      20   0       0      0      0 I   0.0   0.0   0:00.13 kworker+
+    552 root      20   0       0      0      0 I   0.0   0.0   0:00.17 kworker+
+    561 systemd+  20   0   21592  12944  10656 S   0.0   0.3   0:00.05 systemd+
+    568 root      20   0       0      0      0 I   0.0   0.0   0:00.21 kworker+
+    573 systemd+  20   0   91028   7892   6920 S   0.0   0.2   0:00.03 systemd+
+    672 message+  20   0    9636   5340   4624 S   0.0   0.1   0:00.05 dbus-da+
+    680 root      20   0   18208   8820   7744 S   0.0   0.2   0:14.98 systemd+
+    700 root      20   0  107016  22796  13384 S   0.0   0.6   0:00.09 unatten+
+    748 mysql     20   0 2376216 393660  36512 S   0.0   9.8   0:06.01 mysqld
+    812 root      20   0    6976   4828   4012 S   0.0   0.1   0:00.02 login
+    862 root      -2   0       0      0      0 S   0.0   0.0   0:00.00 psimon
+    864 ubuntu    20   0   20320  11488   9352 S   0.0   0.3   0:00.08 systemd
+    865 ubuntu    20   0   21152   3568   1844 S   0.0   0.1   0:00.00 (sd-pam)
+    876 ubuntu    20   0    5148   4252   3548 S   0.0   0.1   0:00.01 bash
+    887 root      20   0   12020   8160   7016 S   0.0   0.2   0:00.00 sshd
+    964 root       0 -20       0      0      0 I   0.0   0.0   0:00.02 kworker+
+   1123 root      20   0       0      0      0 I   0.0   0.0   0:00.00 kworker+
+   1124 root      20   0       0      0      0 I   0.0   0.0   0:00.00 kworker+
+   1183 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+
+   1185 root      20   0       0      0      0 I   0.0   0.0   0:00.00 kworker+
+   1214 root      20   0       0      0      0 I   0.0   0.0   0:00.00 kworker+
+   1218 root      20   0   14732  10448   8760 S   0.0   0.3   0:00.01 sshd
+   1238 ubuntu    20   0   14988   7024   5092 S   0.0   0.2   0:00.00 sshd
+   1239 ubuntu    20   0    4752   3340   3084 S   0.0   0.1   0:00.00 bash
+   1240 ubuntu    20   0    9368   5424   3292 R   0.0   0.1   0:00.00 top
+---
+nr_dirty 40
+nr_dirty_threshold 16189
+nr_dirty_background_threshold 8084
+               total        used        free      shared  buff/cache   available
+Mem:            3915        3683         238        2966        3190         231
+Swap:           2990          34        2956

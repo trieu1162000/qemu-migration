@@ -1,0 +1,8 @@
+
+Config   Workload Runs  normal(med)    xfer GiB(med)    down ms(med)
+--------------------------------------------------------------------
+A        cpu      5     871146         3.33             9.0
+A        idle     5     295872         1.14             5.0
+A        mem      5     990456         3.79             8.0
+
+=== Hinting savings (B vs A) ===
