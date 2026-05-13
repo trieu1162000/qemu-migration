@@ -19,7 +19,12 @@ def parse_file(path):
     d['workload'] = parts[1] if len(parts) > 1 else '?'
     return d
 
-files = sorted(glob.glob(os.path.expanduser('~/workspace/qemu-migration/results/*.txt')))
+#files = sorted(glob.glob(os.path.expanduser('~/workspace/qemu-migration/results/*.txt')))
+# Get all files
+all_files = sorted(glob.glob(os.path.expanduser('~/workspace/qemu-migration/results/*.txt')))
+
+# Exclude conditions*
+files = [f for f in all_files if not os.path.basename(f).startswith('conditions')]
 rows = [parse_file(f) for f in files]
 
 groups = defaultdict(list)
