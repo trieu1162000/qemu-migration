@@ -5,7 +5,7 @@
 LABEL=$1
 SNAPSHOT=$2
 MONITOR="127.0.0.1 4444"
-OUT="$HOME/workspace/qemu-migration/results/${LABEL}-$(date +%H%M%S).txt"
+OUT="$HOME/workspace/qemu-migration/experiments/results/${LABEL}-$(date +%H%M%S).txt"
 
 echo "=== $LABEL ===" | tee "$OUT"
 echo "Snapshot: $SNAPSHOT" | tee -a "$OUT"

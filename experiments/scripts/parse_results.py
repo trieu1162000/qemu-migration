@@ -8,88 +8,114 @@ def parse_file(path):
             text = f.read()
     except Exception:
         return None
-        
+
     d = {}
+    # 1. Extract integer metrics
     for key, pat in [
         ('total_ms', r'total=(\d+)'),
         ('down_ms',  r'down=(\d+)'),
-        ('xfer_gib', r'transferred=([\d.]+) GiB'),
         ('normal',   r'normal=(\d+)'),
         ('zero',     r'zero=(\d+)'),
     ]:
         m = re.search(pat, text)
         d[key] = float(m.group(1)) if m else None
-        
+
+    # 2. Extract data transferred (supports both GiB and MiB dynamically)
+    xfer_match = re.search(r'transferred=([\d.]+)\s+(GiB|MiB)', text)
+    if xfer_match:
+        val = float(xfer_match.group(1))
+        unit = xfer_match.group(2)
+        # Normalize all values to GiB for consistent statistical calculations
+        d['xfer_gib'] = val / 1024 if unit == 'MiB' else val
+    else:
+        d['xfer_gib'] = None
+
     parts = os.path.basename(path).split('-')
-    # Skip invalid file formats (e.g., result.txt or conditions-*.txt)
     if len(parts) < 3:
         return None
-        
+
     d['config']   = parts[0]
     d['workload'] = parts[1]
+
+    # 3. Extract exact run index from file name (e.g., 'run1' -> 1) to prevent column shifting
+    run_match = re.search(r'run(\d+)', parts[2])
+    d['run_idx'] = int(run_match.group(1)) if run_match else None
+
     return d
 
-# Recursively scan all .txt files inside results/ and its subdirectories
+# Scan all .txt result logs recursively
 base_dir = os.path.expanduser('~/workspace/qemu-migration/experiments/results')
-all_files = sorted(glob.glob(os.path.join(base_dir, '**/*.txt'), recursive=True))
+all_files = glob.glob(os.path.join(base_dir, '**/*.txt'), recursive=True)
 
-rows = []
+# Initialize a fixed map structure for Run 1 to Run 5 to ensure slot alignment
+groups = defaultdict(lambda: {i: {} for i in range(1, 6)})
+
 for f in all_files:
     parsed = parse_file(f)
-    if parsed:  # Only append if parsing was successful
-        rows.append(parsed)
+    if parsed and parsed['run_idx'] in range(1, 6):
+        cfg = parsed['config']
+        wl = parsed['workload']
+        idx = parsed['run_idx']
+        groups[(cfg, wl)][idx] = parsed
 
-groups = defaultdict(list)
-for r in rows:
-    groups[(r['config'], r['workload'])].append(r)
-
-# Table layout configuration
+# Table layout presentation header
 print(f"\n{'Config':<7} {'Workload':<9} {'Metric':<13} {'Run 1':<8} {'Run 2':<8} {'Run 3':<8} {'Run 4':<8} {'Run 5':<8} | {'Min':<8} {'Max':<8} {'Avg':<8}")
 print("-" * 105)
 
-for (cfg, wl), items in sorted(groups.items()):
-    normals = [r['normal'] for r in items if r['normal'] is not None]
-    xfers   = [r['xfer_gib'] for r in items if r['xfer_gib'] is not None]
-    downs   = [r['down_ms'] for r in items if r['down_ms'] is not None]
-    
-    # Helper functions to pad missing runs if fewer than 5 files exist
-    def pad_runs(lst):
-        return [f"{v:.0f}" for v in lst] + ["-"] * (5 - len(lst))
-    def pad_runs_float(lst):
-        return [f"{v:.2f}" for v in lst] + ["-"] * (5 - len(lst))
+for (cfg, wl), run_dict in sorted(groups.items()):
+    # Map metrics sequentially from Run 1 through Run 5
+    normals = [run_dict[i].get('normal') for i in range(1, 6)]
+    xfers   = [run_dict[i].get('xfer_gib') for i in range(1, 6)]
+    downs   = [run_dict[i].get('down_ms') for i in range(1, 6)]
 
-    if normals:
-        # 1. Normal Pages row
-        n_runs = pad_runs(normals)
+    # Filter out None values to avoid math errors during min/max/mean calculations
+    v_normals = [v for v in normals if v is not None]
+    v_xfers   = [v for v in xfers if v is not None]
+    v_downs   = [v for v in downs if v is not None]
+
+    # Format helper: padds missing slots with "-" safely if a text log is corrupted/absent
+    def fmt_run(val, is_float=False):
+        if val is None: return "-"
+        return f"{val:.2f}" if is_float else f"{val:.0f}"
+
+    if v_normals:
+        # Line 1: Normal Pages
         print(f"{cfg:<7} {wl:<9} {'normal':<13} "
-              f"{n_runs[0]:<8} {n_runs[1]:<8} {n_runs[2]:<8} {n_runs[3]:<8} {n_runs[4]:<8} | "
-              f"{min(normals):<8.0f} {max(normals):<8.0f} {statistics.mean(normals):<8.0f}")
-        
-        # 2. Transferred GiB row
-        if xfers:
-            x_runs = pad_runs_float(xfers)
+              f"{fmt_run(normals[0]):<8} {fmt_run(normals[1]):<8} {fmt_run(normals[2]):<8} {fmt_run(normals[3]):<8} {fmt_run(normals[4]):<8} | "
+              f"{min(v_normals):<8.0f} {max(v_normals):<8.0f} {statistics.mean(v_normals):<8.0f}")
+
+        # Line 2: Transferred GiB
+        if v_xfers:
             print(f"{'':<7} {'':<9} {'xfer GiB':<13} "
-                  f"{x_runs[0]:<8} {x_runs[1]:<8} {x_runs[2]:<8} {x_runs[3]:<8} {x_runs[4]:<8} | "
-                  f"{min(xfers):<8.2f} {max(xfers):<8.2f} {statistics.mean(xfers):<8.2f}")
-                  
-        # 3. Downtime row
-        if downs:
-            d_runs = pad_runs(downs)
+                  f"{fmt_run(xfers[0], True):<8} {fmt_run(xfers[1], True):<8} {fmt_run(xfers[2], True):<8} {fmt_run(xfers[3], True):<8} {fmt_run(xfers[4], True):<8} | "
+                  f"{min(v_xfers):<8.2f} {max(v_xfers):<8.2f} {statistics.mean(v_xfers):<8.2f}")
+
+        # Line 3: Downtime ms
+        if v_downs:
             print(f"{'':<7} {'':<9} {'down ms':<13} "
-                  f"{d_runs[0]:<8} {d_runs[1]:<8} {d_runs[2]:<8} {d_runs[3]:<8} {d_runs[4]:<8} | "
-                  f"{min(downs):<8.0f} {max(downs):<8.0f} {statistics.mean(downs):<8.0f}")
+                  f"{fmt_run(downs[0]):<8} {fmt_run(downs[1]):<8} {fmt_run(downs[2]):<8} {fmt_run(downs[3]):<8} {fmt_run(downs[4]):<8} | "
+                  f"{min(v_downs):<8.0f} {max(v_downs):<8.0f} {statistics.mean(v_downs):<8.0f}")
         print("-" * 105)
 
+# Calculate improvement percentages (Savings) with clear labels
 print("\n=== Hinting savings (B vs A based on Average) ===")
 for wl in ['idle', 'mem', 'cpu']:
-    a = groups.get(('A', wl), [])
-    b = groups.get(('B', wl), [])
-    if a and b:
-        a_normals = [r['normal'] for r in a if r['normal'] is not None]
-        b_normals = [r['normal'] for r in b if r['normal'] is not None]
-        if a_normals and b_normals:
-            a_avg = statistics.mean(a_normals)
-            b_avg = statistics.mean(b_normals)
-            saving = (a_avg - b_avg) / a_avg * 100
-            print(f"  {wl:<6}: {a_avg:.0f} -> {b_avg:.0f} normal pages  ({saving:+.1f}%)")
+    a_runs = groups.get(('A', wl), {})
+    b_runs = groups.get(('B', wl), {})
 
+    a_normals = [a_runs[i].get('normal') for i in range(1, 6) if a_runs[i].get('normal') is not None]
+    b_normals = [b_runs[i].get('normal') for i in range(1, 6) if b_runs[i].get('normal') is not None]
+
+    if a_normals and b_normals:
+        a_avg = statistics.mean(a_normals)
+        b_avg = statistics.mean(b_normals)
+
+        # Calculate percentage change from baseline A to variant B
+        diff_pct = ((b_avg - a_avg) / a_avg) * 100
+
+        if diff_pct <= 0:
+            status = f"[Reduced/Saved {abs(diff_pct):.1f}%]"
+        else:
+            status = f"[Increased/Worse +{diff_pct:.1f}%]"
+
+        print(f"  {wl:<6}: {a_avg:.0f} -> {b_avg:.0f} normal pages  {status}")
