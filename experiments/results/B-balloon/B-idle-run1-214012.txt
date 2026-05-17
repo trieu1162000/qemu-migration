@@ -1,2 +1,0 @@
-=== B-idle-run1 ===
-Snapshot: B-W1_idle
