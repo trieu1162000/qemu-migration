@@ -7,7 +7,7 @@ LABEL=$1
 SNAPSHOT=$2
 CHANNELS=${3:-0}   # default 0 = multifd disabled (Phase 2 behaviour)
 MONITOR="127.0.0.1 4444"
-OUT="/home/worker/workspace/external/qemu-migration/results/${LABEL}-$(date +%H%M%S).txt"
+OUT="/home/ngerr/workspace/qemu-migration/experiments/results/${LABEL}-$(date +%H%M%S).txt"
 
 echo "=== $LABEL | channels=$CHANNELS ===" | tee "$OUT"
 echo "Snapshot: $SNAPSHOT" | tee -a "$OUT"
