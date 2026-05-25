@@ -1,0 +1,19 @@
+=== A2-idle-run4 | channels=2 ===
+Snapshot: A_W1_idle
+--- guest free -m ---
+               total        used        free      shared  buff/cache   available
+Mem:            1955         218        1570           1         244        1737
+Swap:              0           0           0
+QEMU 11.0.50 monitor - type 'help' for more information
+(qemu) i[K[Din[K[D[Dinf[K[D[D[Dinfo[K[D[D[D[Dinfo [K[D[D[D[D[Dinfo m[K[D[D[D[D[D[Dinfo mi[K[D[D[D[D[D[D[Dinfo mig[K[D[D[D[D[D[D[D[Dinfo migr[K[D[D[D[D[D[D[D[D[Dinfo migra[K[D[D[D[D[D[D[D[D[D[Dinfo migrat[K[D[D[D[D[D[D[D[D[D[D[Dinfo migrate[K
+Status: 		completed
+Time (ms): 		total=195102, setup=8, down=114
+RAM info:
+  Throughput (Mbps): 	83.98
+  Sizes: 		pagesize=4 KiB, total=2.13 GiB
+  Transfers: 		transferred=1.91 GiB, remain=0 B
+    Channels: 		precopy=1.91 GiB, multifd=0 B, postcopy=0 B
+    Page Types: 	normal=498866, zero=60148
+  Page Rates (pps): 	transfer=2610
+  Others: 		dirty_syncs=4, downtime_bytes=1933383
+(qemu) 

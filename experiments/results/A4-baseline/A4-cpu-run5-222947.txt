@@ -1,0 +1,19 @@
+=== A4-cpu-run5 | channels=4 ===
+Snapshot: A_W3_cpu
+--- guest free -m ---
+               total        used        free      shared  buff/cache   available
+Mem:            1955         217        1570           1         244        1737
+Swap:              0           0           0
+QEMU 11.0.50 monitor - type 'help' for more information
+(qemu) i[K[Din[K[D[Dinf[K[D[D[Dinfo[K[D[D[D[Dinfo [K[D[D[D[D[Dinfo m[K[D[D[D[D[D[Dinfo mi[K[D[D[D[D[D[D[Dinfo mig[K[D[D[D[D[D[D[D[Dinfo migr[K[D[D[D[D[D[D[D[D[Dinfo migra[K[D[D[D[D[D[D[D[D[D[Dinfo migrat[K[D[D[D[D[D[D[D[D[D[D[Dinfo migrate[K
+Status: 		completed
+Time (ms): 		total=196208, setup=8, down=119
+RAM info:
+  Throughput (Mbps): 	84.07
+  Sizes: 		pagesize=4 KiB, total=2.13 GiB
+  Transfers: 		transferred=1.92 GiB, remain=0 B
+    Channels: 		precopy=1.92 GiB, multifd=0 B, postcopy=0 B
+    Page Types: 	normal=502244, zero=56082
+  Page Rates (pps): 	transfer=2570
+  Others: 		dirty_syncs=3, downtime_bytes=3082143
+(qemu) 
