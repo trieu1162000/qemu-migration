@@ -1,0 +1,19 @@
+=== E-mem-run3 | channels=4 ===
+Snapshot: B_W2_mem
+--- guest free -m ---
+               total        used        free      shared  buff/cache   available
+Mem:            1955        1680         146        1401        1606         275
+Swap:              0           0           0
+QEMU 11.0.50 monitor - type 'help' for more information
+(qemu) i[K[Din[K[D[Dinf[K[D[D[Dinfo[K[D[D[D[Dinfo [K[D[D[D[D[Dinfo m[K[D[D[D[D[D[Dinfo mi[K[D[D[D[D[D[D[Dinfo mig[K[D[D[D[D[D[D[D[Dinfo migr[K[D[D[D[D[D[D[D[D[Dinfo migra[K[D[D[D[D[D[D[D[D[D[Dinfo migrat[K[D[D[D[D[D[D[D[D[D[D[Dinfo migrate[K
+Status: 		completed
+Time (ms): 		total=77965, setup=13, down=92
+RAM info:
+  Throughput (Mbps): 	212.28
+  Sizes: 		pagesize=4 KiB, total=2.13 GiB
+  Transfers: 		transferred=1.93 GiB, remain=0 B
+    Channels: 		precopy=6.09 KiB, multifd=1.93 GiB, postcopy=0 B
+    Page Types: 	normal=503501, zero=59808
+  Page Rates (pps): 	transfer=6400
+  Others: 		dirty_syncs=3
+(qemu) 
