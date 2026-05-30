@@ -1,0 +1,21 @@
+=== H4-mem-run2 | channels=4 | codec=zstd ===
+Snapshot: A_W2_mem
+--- guest free -m ---
+               total        used        free      shared  buff/cache   available
+Mem:            1955        1686         100        1401        1647         268
+Swap:              0           0           0
+multifd=zstd, channels=4
+Migrating...
+QEMU 11.0.50 monitor - type 'help' for more information
+(qemu) i[K[Din[K[D[Dinf[K[D[D[Dinfo[K[D[D[D[Dinfo [K[D[D[D[D[Dinfo m[K[D[D[D[D[D[Dinfo mi[K[D[D[D[D[D[D[Dinfo mig[K[D[D[D[D[D[D[D[Dinfo migr[K[D[D[D[D[D[D[D[D[Dinfo migra[K[D[D[D[D[D[D[D[D[D[Dinfo migrat[K[D[D[D[D[D[D[D[D[D[D[Dinfo migrate[K
+Status: 		completed
+Time (ms): 		total=12200, setup=14, down=82
+RAM info:
+  Throughput (Mbps): 	85.53
+  Sizes: 		pagesize=4 KiB, total=2.13 GiB
+  Transfers: 		transferred=124 MiB, remain=0 B
+    Channels: 		precopy=1.35 KiB, multifd=124 MiB, postcopy=0 B
+    Page Types: 	normal=503173, zero=55838
+  Page Rates (pps): 	transfer=292830
+  Others: 		dirty_syncs=3
+(qemu) 

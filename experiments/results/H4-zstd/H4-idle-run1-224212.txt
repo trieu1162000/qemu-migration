@@ -1,0 +1,21 @@
+=== H4-idle-run1 | channels=4 | codec=zstd ===
+Snapshot: A_W1_idle
+--- guest free -m ---
+               total        used        free      shared  buff/cache   available
+Mem:            1955         219        1569           1         244        1736
+Swap:              0           0           0
+multifd=zstd, channels=4
+Migrating...
+QEMU 11.0.50 monitor - type 'help' for more information
+(qemu) i[K[Din[K[D[Dinf[K[D[D[Dinfo[K[D[D[D[Dinfo [K[D[D[D[D[Dinfo m[K[D[D[D[D[D[Dinfo mi[K[D[D[D[D[D[D[Dinfo mig[K[D[D[D[D[D[D[D[Dinfo migr[K[D[D[D[D[D[D[D[D[Dinfo migra[K[D[D[D[D[D[D[D[D[D[Dinfo migrat[K[D[D[D[D[D[D[D[D[D[D[Dinfo migrate[K
+Status: 		completed
+Time (ms): 		total=11880, setup=20, down=127
+RAM info:
+  Throughput (Mbps): 	93.37
+  Sizes: 		pagesize=4 KiB, total=2.13 GiB
+  Transfers: 		transferred=132 MiB, remain=0 B
+    Channels: 		precopy=1.29 KiB, multifd=132 MiB, postcopy=0 B
+    Page Types: 	normal=497286, zero=60129
+  Page Rates (pps): 	transfer=215040
+  Others: 		dirty_syncs=2
+(qemu) 
