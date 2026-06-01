@@ -1,0 +1,21 @@
+=== A8-hotmem-run2 | channels=8 | codec=none ===
+Snapshot: A_W4_hotmem
+--- guest free -m ---
+               total        used        free      shared  buff/cache   available
+Mem:            1955        1634         107           3         292         320
+Swap:              0           0           0
+multifd=none, channels=8
+Migrating...
+QEMU 11.0.50 monitor - type 'help' for more information
+(qemu) i[K[Din[K[D[Dinf[K[D[D[Dinfo[K[D[D[D[Dinfo [K[D[D[D[D[Dinfo m[K[D[D[D[D[D[Dinfo mi[K[D[D[D[D[D[D[Dinfo mig[K[D[D[D[D[D[D[D[Dinfo migr[K[D[D[D[D[D[D[D[D[Dinfo migra[K[D[D[D[D[D[D[D[D[D[Dinfo migrat[K[D[D[D[D[D[D[D[D[D[D[Dinfo migrate[K
+Status: 		completed
+Time (ms): 		total=49380, setup=11, down=146
+RAM info:
+  Throughput (Mbps): 	333.57
+  Sizes: 		pagesize=4 KiB, total=2.13 GiB
+  Transfers: 		transferred=1.92 GiB, remain=0 B
+    Channels: 		precopy=4.05 KiB, multifd=1.92 GiB, postcopy=0 B
+    Page Types: 	normal=499951, zero=490943
+  Page Rates (pps): 	transfer=227100
+  Others: 		dirty_syncs=6
+(qemu) 
