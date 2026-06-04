@@ -1,0 +1,139 @@
+@startuml 00-overall-migration-flow-academic-boxed
+title QEMU Live Migration — Adaptive Per-Channel XBZRLE Architecture
+!pragma layout smetana
+skinparam maxMessageSize 200
+skinparam sequenceMessageAlign center
+skinparam BoxPadding 10
+skinparam ParticipantFontStyle bold
+autonumber
+!pragma teoz true
+
+' --- ACADEMIC GRAPHITE PALETTE ---
+skinparam Sequence {
+    LifeLineBorderColor #444444
+    LifeLineBackgroundColor #F0F0F0
+    ArrowColor #1A365D
+    ActorBorderColor #1A365D
+    GroupBorderColor #A0AEC0
+    GroupHeaderFontColor #2D3748
+    GroupBackgroundColor #F7FAFC
+}
+skinparam Note {
+    BackgroundColor #F7FAFC
+    BorderColor #CBD5E0
+    FontColor #2D3748
+}
+
+' === SOURCE HOST BOXES ===
+box "QEMU Source" #Lavender
+    box "Kernel" #F8FAFC
+        participant KVM as "Dirty-log Driver\n(KVM Interface)" #E6F0FA
+    end box
+    box "Mainline Migration Engine" #EDF2F7
+        participant Engine      as "Core Migration\nController" #E6F0FA
+        participant Sync        as "Bitmap\nSynchronizer" #E6F0FA
+        participant Scanner     as "Page Scanner\n& Router" #E6F0FA
+        participant Sender      as "Channel Worker\n(Sender Thread)" #E6F0FA
+    end box
+
+    box "Our Proposed Modules" #FFF2CC
+        participant HotMap      as "Page Hotness\nTracker" #FFE6CC
+        participant Encoder     as "XBZRLE Delta\nEncoder" #FFE6CC
+    end box
+end box
+
+' === NETWORK ===
+participant Network as "TCP Network\nChannels" #E2E8F0
+
+' === DESTINATION HOST BOXES ===
+box "QEMU Destination" #Lavender
+    box "Mainline Process" #EDF2F7
+        participant Receiver    as "Channel Worker\n(Receiver Thread)" #E6F0FA
+        participant GuestRAM    as "Destination\nGuest RAM" #E6F0FA
+    end box
+    
+    box "Our Proposed Modules" #FFF2CC
+        participant Decoder     as "XBZRLE Delta\nDecoder" #FFE6CC
+    end box
+end box
+' ==========================================
+' == DIAGRAM FLOW ==
+' ==========================================
+
+== Phase 1: Periodic Bitmap Synchronization ==
+
+Engine --> Engine : migration_thread loop triggers period
+Engine -> Sync : migration_bitmap_sync()
+Sync -> KVM : memory_global_dirty_log_sync()
+KVM --> Sync : Return kernel dirty bitmap bitmask
+
+Sync -> Sync : ramblock_sync_dirty_bitmap()\nUpdate master migration bitmap
+
+group #FFF9E6 Proposed: Dynamic Hotness Mapping
+    Sync -> HotMap : Sync dirty bits to hotness matrix
+    note over HotMap
+        **Tracking Mechanism:**
+        Increments frequency counter per dirty page (max 3),
+        decrements on clean rounds (min 0).
+    end note
+    HotMap --> Sync : Dynamic map updated
+end
+
+Sync --> Engine : Synchronization cycle complete
+
+== Phase 2: Driven Page Routing ==
+
+Engine -> Scanner : Scan dirty pages in master bitmap
+
+group #FFF9E6 Proposed: Content-Aware Scheduling
+    note over Scanner
+        **Adaptive Routing Strategy:**
+        Queries HotMap to bind frequently modified 
+        pages to a dedicated hot thread.
+    end note
+    
+    alt hot_page_is_hot(page) == true
+        Scanner -> Sender : Dispatch to **Thread 0**\n(Dedicated Hot-Channel)
+    else cold page
+        Scanner -> Sender : Dispatch to **Thread [1 ... N-1]**\n(Load-balanced via GPA hash)
+    end
+end
+
+== Phase 3: Distributed Delta Coding & Transmission ==
+
+Sender -> Encoder : Initiate batch encoding pipeline
+note over Encoder
+  **Lockless Design:** Each worker maintains an independent 
+  PageCache to eliminate thread contention.
+end note
+
+loop For each page within the current batch
+    group #FFF9E6 Proposed: Isolated Differential Coding
+        alt Page Cache HIT
+            Encoder -> Encoder : Compute XOR(new, cached_old)\nGenerate differential metadata\nSet flags (delta_encoded = 1)
+        else Page Cache MISS
+            Encoder -> Encoder : Commit full page to local cache\nSet flags (delta_encoded = 0)
+        end
+    end
+end
+
+Encoder -> Network : Transmit MultiFDPacket\n(Metadata Header + Payload Buffer)
+
+== Phase 4: Destination Reconstruction ==
+
+Network -> Receiver : Ingest stream payload via per-channel socket
+Receiver -> Decoder : Submit batch for processing
+
+loop For each page within the current batch
+    group #FFF9E6 Proposed: Parallel Reconstruction
+        alt delta_encoded == 1
+            Decoder -> Decoder : Retrieve baseline from receiver cache\nApply XOR delta -> Reconstruct runtime state
+        else delta_encoded == 0
+            Decoder -> Decoder : Write full page direct to receiver cache
+        end
+    end
+end
+
+Decoder -> GuestRAM : Write finalized page to target memory space
+
+@enduml
