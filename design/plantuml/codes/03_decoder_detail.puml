@@ -1,0 +1,95 @@
+@startuml 03-decoder-detail
+title C — Per-Thread XBZRLE Decoder: Recv Pipeline
+!pragma layout smetana
+skinparam maxMessageSize 600
+skinparam sequenceMessageAlign center
+skinparam BoxPadding 10
+skinparam ParticipantFontStyle bold
+autonumber
+!pragma teoz true
+
+skinparam Sequence {
+    LifeLineBorderColor #444444
+    LifeLineBackgroundColor #F0F0F0
+    ArrowColor #1A365D
+    ActorBorderColor #1A365D
+    GroupBorderColor #A0AEC0
+    GroupHeaderFontColor #2D3748
+    GroupBackgroundColor #F7FAFC
+}
+skinparam Note {
+    BackgroundColor #F7FAFC
+    BorderColor #CBD5E0
+    FontColor #2D3748
+}
+
+' === PARTICIPANT BOXES ===
+box "Mainline Migration Engine" #EDF2F7
+    participant Recver as "Channel Worker\n(Receiver Thread N)" #E6F0FA
+    participant Packet as "MultiFDPacket_t\n(Header Parse)" #E6F0FA
+    participant IO as "QIOChannel\n(Socket Read)" #E6F0FA
+    participant GuestRAM as "Destination\nGuest RAM" #E6F0FA
+end box
+
+box "Our Proposed Modules" #FFF2CC
+    participant Cache as "Per-Thread\nPageCache\n(Lockless)" #FFE6CC
+    participant Decode as "xbzrle_decode\n(Delta Engine)" #FFE6CC
+    participant Meta as "Extended Header\n(bitmap + len[])" #FFE6CC
+end box
+
+== Phase 4: Packet Reception & Classification ==
+
+Recver -> IO : Read packet header
+IO --> Recver : p->packet (with flags)
+
+Recver -> Packet : flags = p->flags & COMPRESSION_MASK
+
+note right Recver #Yellow
+    **Zero page handling:**
+    p->zero_pages are handled by
+    multifd_recv_zero_page_process()
+end note
+
+alt flags == MULTIFLAG_NOCOMP && p->flags & MULTIFLAG_XBZRLE
+
+    group #FFF9E6 Proposed: Parse Extended Metadata
+        Recver -> Meta : Parse xbzrle_bitmap from header ext
+        Recver -> Meta : Parse xbzrle_len[] from header ext
+        Recver -> Meta : Validate xbzrle_data_size
+    end
+
+    Recver -> IO : Read data payload (xbzrle_data_size bytes)
+
+    loop For each normal page i [0..normal_pages-1]
+        group #FFF9E6 Proposed: Per-Page Decode
+            alt test_bit(i, xbzrle_bitmap) == 1  → DELTA
+                note over Recver: Page is delta-encoded
+                Recver -> Cache : cache_is_cached(addr)
+                alt CACHED
+                    Cache --> Recver : base = get_cached_data(addr)
+                    Recver -> Decode : xbzrle_decode_buffer(encoded, len, base, PAGE_SIZE, dst)
+                    Decode --> Recver : decoded bytes count
+                    Recver -> GuestRAM : Store decoded page
+                    Recver -> Cache : cache_insert(addr, dst)
+                else MISS
+                    note over Recver: Protocol violation
+                    Recver -> Recver : FATAL error
+                end
+            else FULL PAGE (bitmap == 0)
+                note over Recver: Full page (delta overflow or cache miss at sender)
+                Recver -> GuestRAM : memcpy(dst, data, PAGE_SIZE)
+                Recver -> Cache : cache_insert(addr, dst)
+            end
+        end
+    end
+
+    Recver -> Recver : ramblock_recv_bitmap_set_offset()
+
+else flags == MULTIFLAG_NOCOMP  (XBZRLE flag not set)
+    note over Recver: Fallback standard multifd (old src or xbzrle off)
+    Recver -> Recver : multifd_recv_zero_page_process(p)
+    Recver -> IO : readv full pages -> GuestRAM
+    Recver -> Recver : ramblock_recv_bitmap_set_offset()
+end
+
+@enduml
