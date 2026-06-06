@@ -1,0 +1,104 @@
+@startuml 01-router-detail
+title 01 - Hot-Aware Page Router: Dispatch Logic
+!pragma layout smetana
+skinparam maxMessageSize 600
+skinparam sequenceMessageAlign center
+skinparam BoxPadding 10
+skinparam ParticipantFontStyle bold
+autonumber
+!pragma teoz true
+
+skinparam Sequence {
+    LifeLineBorderColor #444444
+    LifeLineBackgroundColor #F0F0F0
+    ArrowColor #1A365D
+    ActorBorderColor #1A365D
+    GroupBorderColor #A0AEC0
+    GroupHeaderFontColor #2D3748
+    GroupBackgroundColor #F7FAFC
+}
+skinparam Note {
+    BackgroundColor #F7FAFC
+    BorderColor #CBD5E0
+    FontColor #2D3748
+}
+
+' === PARTICIPANT BOXES ===
+box "Mainline Migration Engine" #EDF2F7
+    participant Scanner as "Page Scanner\n(per-round)" #E6F0FA
+    participant Router  as "multifd_queue_page()\n(inline router)" #E6F0FA
+end box
+
+box "Our Proposed Modules" #FFF2CC
+    participant HotMap as "Hotness Tracker\n(per-page counters)" #FFE6CC
+end box
+
+box "Multifd Channel Pool" #EDF2F7
+    participant Ch0 as "Channel 0\n(Hot Pool)" #E6F0FA
+    participant ChN as "Channel 1..N-1\n(Cold Pool)" #E6F0FA
+end box
+
+== Phase 2: Per-Page Routing Decision ==
+
+Scanner -> Router : multifd_queue_page(block, offset)
+
+group #FFF9E6 Proposed: Read Hotness (from bitmap sync)
+    Router -> HotMap : page_index = (offset - block->host) >> TARGET_PAGE_BITS
+    Router -> HotMap : counter = block->hotness_counters[page_index]
+    note left HotMap #Yellow
+        **Timing:**
+        Counter was last updated at **bitmap sync time**
+        (migration_bitmap_sync, Phase 1).
+        Reads during page iteration may lag by up to one sync cycle.
+        With 2-bit saturating counter + hysteresis, this delay is safe for routing decisions.
+    end note
+    HotMap --> Router : counter (0..3)
+end
+
+alt hot == true  (counter ≥ threshold=2)
+
+    group #FFF9E6 Proposed: Route to Hot Channel
+        Router -> Router : channel_id = gpa_hash(addr, nhotchannels)
+        note right Router #Yellow
+            **Hash function (Knuth):**
+            (addr × 2654435761) >> (32 - ceil_log2(nhot))
+            Default: nhotchannels = 1 → ch 0 always
+        end note
+    end
+
+    group #FFF9E6 Proposed: Enqueue with Backpressure Check
+        Router -> Router : Check if Ch0's offset[] is full
+        alt Channel not full
+            Router -> Ch0 : p->data->offset[num++] = offset
+            Ch0 --> Router : Queued to hot channel
+        else Channel full
+            note right Router #Yellow
+                **Backpressure fallback:**
+                MultiFDPages_t offset[] is full (num == page_count).
+                Fall back to cold channel routing to avoid blocking page iteration.
+            end note
+            Router -> Router : channel_id = cold_base + gpa_hash(addr, ncoll)
+            Router -> ChN : Fallback enqueue (full-page send)
+            ChN --> Router : Queued via fallback
+        end
+    end
+
+else cold  (counter ≤ 1)
+
+    group #FFF9E6 Proposed: Route to Cold Pool
+        Router -> Router : cold_base = nhotchannels
+        Router -> Router : channel_id = cold_base + gpa_hash(addr, nchannels - nhotchannels)
+    end
+    group #FFF9E6 Proposed: Enqueue
+        Router -> ChN : p->data->offset[num++] = offset
+        ChN --> Router : Queued via GPA hash
+    end
+end
+
+note right Router #Yellow
+    **Correctness invariant:**
+    Same address always routes to the same channel
+    while it stays in the same hotness class (XBZRLE cache hits).
+end note
+
+@enduml
