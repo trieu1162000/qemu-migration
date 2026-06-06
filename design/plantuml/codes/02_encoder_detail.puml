@@ -1,0 +1,105 @@
+@startuml 02-encoder-detail
+title B — Per-Thread XBZRLE Encoder: Send Pipeline
+!pragma layout smetana
+skinparam maxMessageSize 600
+skinparam sequenceMessageAlign center
+skinparam BoxPadding 10
+skinparam ParticipantFontStyle bold
+autonumber
+!pragma teoz true
+
+skinparam Sequence {
+    LifeLineBorderColor #444444
+    LifeLineBackgroundColor #F0F0F0
+    ArrowColor #1A365D
+    ActorBorderColor #1A365D
+    GroupBorderColor #A0AEC0
+    GroupHeaderFontColor #2D3748
+    GroupBackgroundColor #F7FAFC
+}
+skinparam Note {
+    BackgroundColor #F7FAFC
+    BorderColor #CBD5E0
+    FontColor #2D3748
+}
+
+' === PARTICIPANT BOXES ===
+box "Mainline Migration Engine" #EDF2F7
+    participant Sender as "Channel Worker\n(Sender Thread N)" #E6F0FA
+    participant Packet as "MultiFDPacket_t\n(Header Buffer)" #E6F0FA
+    participant IO as "QIOChannel\n(Socket Write)" #E6F0FA
+end box
+
+box "Our Proposed Modules" #FFF2CC
+    participant Cache as "Per-Thread\nPageCache\n(Lockless)" #FFE6CC
+    participant Encode as "xbzrle_encode\n(Delta Engine)" #FFE6CC
+    participant Meta as "Extended Header\n(bitmap + len[])" #FFE6CC
+end box
+
+== Phase 3: Per-Thread Batch Encoding Pipeline ==
+
+note right Sender #Yellow
+    **Zero page handling:**
+    p->zero_pages are handled by a separate path
+    (multifd_send_zero_page_process)
+end note
+
+Sender --> Sender : multifd_send
+Sender -> Sender : send_prepare(p)
+
+Sender -> Packet : Read normal_pages list from p->packet->offset[]
+
+note over Sender #Yellow
+    **No cross-thread locking**
+    Each thread encodes its assigned pages independently
+end note
+
+loop For each page i in normal_pages [0..normal_pages-1]
+    group #FFF9E6 Proposed: Per-Page Encode Decision
+        Sender -> Cache : cache_is_cached(addr)
+        alt HIT
+            Cache --> Sender : old = get_cached_data(addr)
+            Sender -> Encode : encoded_len = xbzrle_encode_buffer(old, current, PAGE_SIZE, encoded_buf)
+            alt encoded_len < PAGE_SIZE
+                note over Sender: delta viable
+                Sender -> Meta : set_bit(i, xbzrle_bitmap) ← 1
+                Sender -> Meta : xbzrle_len[i] = encoded_len
+                Sender -> Sender : memcpy(data_buf ← encoded_buf)
+                Sender -> Cache : cache_hits++
+            else overflow
+                note over Sender: delta >= full page: send full
+                Sender -> Meta : clear_bit(i, xbzrle_bitmap) ← 0
+                Sender -> Meta : xbzrle_len[i] = PAGE_SIZE
+                Sender -> Sender : memcpy(data_buf ← full page)
+                Sender -> Cache : cache_insert(addr, full_page)
+                Sender -> Cache : overflows++
+            end
+        else MISS
+            note over Sender: first time on this channel
+            Sender -> Meta : clear_bit(i, xbzrle_bitmap) ← 0
+            Sender -> Meta : xbzrle_len[i] = PAGE_SIZE
+            Sender -> Sender : memcpy(data_buf ← full page)
+            Sender -> Cache : cache_insert(addr, full_page)
+            Sender -> Cache : cache_misses++
+        end
+    end
+end
+
+group #FFF9E6 Proposed: Assemble Extended Packet
+    Sender -> Meta : packet->xbzrle_data_size = total_bytes
+    Sender -> Meta : memcpy bitmap + len[] → header ext area
+    Sender -> Packet : p->flags |= MULTIFLAG_XBZRLE
+    Sender -> Sender : Build iov[0] = header, iov[1] = data
+    Sender -> Packet : multifd_send_fill_packet(p)
+end
+
+Sender -> IO : qio_channel_writev_all(iov)
+
+note over IO #Yellow
+    **Wire format:**
+    [Extended MultiFDPacket_t header]
+    [xbzrle_bitmap + xbzrle_len[]]
+    [Per-page delta or full data]
+end note
+
+@enduml
