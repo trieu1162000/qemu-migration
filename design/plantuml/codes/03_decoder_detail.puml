@@ -50,43 +50,61 @@ note right Recver #Yellow
     multifd_recv_zero_page_process()
 end note
 
-alt flags == MULTIFLAG_NOCOMP && p->flags & MULTIFLAG_XBZRLE
+alt flags == MULTIFD_FLAG_NOCOMP && p->flags & MULTIFD_FLAG_XBZRLE
 
     group #FFF9E6 Proposed: Parse Extended Metadata
-        Recver -> Meta : Parse xbzrle_bitmap from header ext
-        Recver -> Meta : Parse xbzrle_len[] from header ext
-        Recver -> Meta : Validate xbzrle_data_size
+        Recver -> Meta : multifd_get_xbzrle_ext(p->packet)
+        Recver -> Meta : xbzrle_data_size = packet->unused32[0]
     end
 
-    Recver -> IO : Read data payload (xbzrle_data_size bytes)
+    Recver -> IO : qio_channel_read_all(data_buf, xbzrle_data_size)
 
     loop For each normal page i [0..normal_pages-1]
         group #FFF9E6 Proposed: Per-Page Decode
-            alt test_bit(i, xbzrle_bitmap) == 1  → DELTA
-                note over Recver: Page is delta-encoded
+            note over Recver, GuestRAM #FFECB3
+                **No cross-thread locking**
+                Each channel thread independently handles its own packet reception and decode
+            end note
+            alt DELTA (test_bit(i, xbzrle_bitmap) == 1)
+                note over Recver #FFECB3
+                    **Page is delta-encoded:**
+                    xbzrle_decode_buffer applies XOR-RLE patches over a base.
+                    Base is the old page from the per-thread cache.
+                end note
                 Recver -> Cache : cache_is_cached(addr)
                 alt CACHED
-                    Cache --> Recver : base = get_cached_data(addr)
-                    Recver -> Decode : xbzrle_decode_buffer(encoded, len, base, PAGE_SIZE, dst)
-                    Decode --> Recver : decoded bytes count
-                    Recver -> GuestRAM : Store decoded page
-                    Recver -> Cache : cache_insert(addr, dst)
+                    Cache --> Recver : old = get_cached_data(addr)
+                    Recver -> Recver : memcpy(dst, old, PAGE_SIZE)
+                    Recver -> Decode : xbzrle_decode_buffer(src, len, dst, PAGE_SIZE)
+                    Decode --> Recver : decoded bytes
+                    note over Recver #FFECB3
+                        **No cache_insert:**
+                        Old base stays in cache (age refreshed by cache_is_cached),
+                        Mirroring sender's delta-hit behaviour.
+                    end note
                 else MISS
-                    note over Recver: Protocol violation
+                    note over Recver #FFECB3
+                        **Protocol violation**
+                    end note
                     Recver -> Recver : FATAL error
                 end
             else FULL PAGE (bitmap == 0)
-                note over Recver: Full page (delta overflow or cache miss at sender)
-                Recver -> GuestRAM : memcpy(dst, data, PAGE_SIZE)
+                note over Recver #FFECB3
+                    **Cache miss or overflow on sender:**
+                    memcpy directly to guest RAM, then update cache.
+                end note
+                Recver -> GuestRAM : memcpy(dst, data_buf + offset, PAGE_SIZE)
                 Recver -> Cache : cache_insert(addr, dst)
             end
         end
+        Recver -> Recver : ramblock_recv_bitmap_set_offset()
     end
 
-    Recver -> Recver : ramblock_recv_bitmap_set_offset()
-
-else flags == MULTIFLAG_NOCOMP  (XBZRLE flag not set)
-    note over Recver: Fallback standard multifd (old src or xbzrle off)
+else flags == MULTIFD_FLAG_NOCOMP  (XBZRLE flag not set)
+    note over Recver #Yellow
+        **Old src or xbzrle off:**
+        Fallback standard multifd
+    end note
     Recver -> Recver : multifd_recv_zero_page_process(p)
     Recver -> IO : readv full pages -> GuestRAM
     Recver -> Recver : ramblock_recv_bitmap_set_offset()
