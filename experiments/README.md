@@ -1,15 +1,11 @@
 ## Full config matrix
 
-| Group | Config | Hinting | Multifd ch | QEMU | Description |
+| Group | Config | Method | Multifd ch | QEMU | Description |
 |-------|--------|---------|------------|------|-------------|
 | Baseline | A0 | none | 0 | mainline | precopy, no compression |
 | Baseline | A2 | none | 2 | mainline | multifd 2ch, no compression |
 | Baseline | A4 | none | 4 | mainline | multifd 4ch, no compression |
 | Baseline | A8 | none | 8 | mainline | multifd 8ch, no compression |
-| Baseline | B0 | none | 0 | mainline | balloon hinting, no multifd |
-| Baseline | B2 | none | 2 | mainline | balloon + 2ch (obslete) |
-| Baseline | B4 | none | 4 | mainline | balloon + 4ch (obslete) |
-| Baseline | B8 | none | 8 | mainline | balloon + 8ch (obslete) |
 | Codec | G0 | xbzrle | 0 | mainline | XBZRLE only, no multifd |
 | Codec | H4 | zstd | 4 | mainline | multifd 4ch + zstd |
 | Codec | H8 | zstd | 8 | mainline | multifd 8ch + zstd |
@@ -17,13 +13,10 @@
 | Codec | I8 | zlib | 8 | mainline | multifd 8ch + zlib |
 | Proposed | J4 | xbzrle | 4 | patched | multifd 4ch + XBZRLE (*)|
 | Proposed | J8 | xbzrle | 8 | patched | multifd 8ch + XBZRLE (*)|
-| Extended | C | eBPF host-side | 0 | mainline | Host-side hinting, no multifd |
-| Extended | G | eBPF host-side | 2 | mainline | eBPF + 2ch multifd (degraded) |
-| Extended | H | eBPF host-side | 4 | mainline | eBPF + 4ch multifd (degraded) |
-| Extended | I | eBPF host-side | 8 | mainline | eBPF + 8ch multifd (degraded) |
-| Extended | G' | eBPF host-side | 2 | patched | eBPF + 2ch + fix |
-| Extended | H' | eBPF host-side | 4 | patched | eBPF + 4ch + fix |
-| Extended | I' | eBPF host-side | 8 | patched | eBPF + 8ch + fix |
+| Extended | K4 | xbzrle + zstd | 4 | patched | multifd 4ch + zstd + XBZRLE (*)|
+| Extended | K8 | xbzrle + zstd | 8 | patched | multifd 8ch + zstd + XBZRLE (*)|
+| Extended | L4 | xbzrle + zlib | 4 | patched | multifd 4ch + zlib + XBZRLE (*)|
+| Extended | L8 | xbzrle + zlib | 8 | patched | multifd 8ch + zlib + XBZRLE (*)|
 
 ##  Result - Total Migration Time (seconds)
 
@@ -46,6 +39,10 @@
 | I8 | 13.0 | 13.2 | 12.9 | 13.0 | 12.9 | 12.9 | 13.2 | 13.0 |
 | **J4** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
 | **J8** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
+| **K4** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
+| **K8** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
+| **L4** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
+| **L8** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
 
 ### W2 - mem (dd fill, static)
 
@@ -66,6 +63,10 @@
 | I8 | 13.0 | 13.2 | 13.1 | 12.8 | 12.9 | 12.8 | 13.2 | 13.0 |
 | **J4** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
 | **J8** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
+| **K4** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
+| **K8** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
+| **L4** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
+| **L8** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
 
 ### W3 - cpu (sysbench)
 
@@ -86,6 +87,10 @@
 | I8 | 13.5 | 13.6 | 13.6 | 13.8 | 13.5 | 13.5 | 13.8 | 13.6 |
 | **J4** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
 | **J8** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
+| **K4** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
+| **K8** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
+| **L4** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
+| **L8** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
 
 ### W4 - hotmem (stress-ng --vm-keep)
 
@@ -106,4 +111,7 @@
 | I8 | 19.5 | 20.7 | 20.6 | 20.4 | 22.2 | 19.5 | 22.2 | 20.7 |
 | **J4** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
 | **J8** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
-
+| **K4** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
+| **K8** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
+| **L4** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
+| **L8** | TBU | TBU | TBU | TBU | TBU | TBU | TBU | TBU |
