@@ -49,36 +49,41 @@ Sender -> Sender : send_prepare(p)
 
 Sender -> Packet : Read normal_pages list from p->packet->offset[]
 
-note over Sender #Yellow
-    **No cross-thread locking**
-    Each thread encodes its assigned pages independently
-end note
-
 loop For each page i in normal_pages [0..normal_pages-1]
     group #FFF9E6 Proposed: Per-Page Encode Decision
+        note over Sender #FFECB3
+            **No cross-thread locking**
+            Each thread encodes its assigned pages independently
+        end note
         Sender -> Cache : cache_is_cached(addr)
         alt HIT
             Cache --> Sender : old = get_cached_data(addr)
             Sender -> Encode : encoded_len = xbzrle_encode_buffer(old, current, PAGE_SIZE, encoded_buf)
             alt encoded_len < PAGE_SIZE
-                note over Sender: delta viable
-                Sender -> Meta : set_bit(i, xbzrle_bitmap) ← 1
+                note over Sender #FFECB3
+                    **delta viable**
+                end note
+                Sender -> Meta : set_bit(i, xbzrle_bitmap) to 1
                 Sender -> Meta : xbzrle_len[i] = encoded_len
-                Sender -> Sender : memcpy(data_buf ← encoded_buf)
+                Sender -> Sender : memcpy(data_buf, encoded_buf)
                 Sender -> Cache : cache_hits++
             else overflow
-                note over Sender: delta >= full page: send full
-                Sender -> Meta : clear_bit(i, xbzrle_bitmap) ← 0
+                note over Sender #FFECB3
+                    **delta >= full page**
+                end note
+                Sender -> Meta : clear_bit(i, xbzrle_bitmap) to 0
                 Sender -> Meta : xbzrle_len[i] = PAGE_SIZE
-                Sender -> Sender : memcpy(data_buf ← full page)
+                Sender -> Sender : memcpy(data_buf, full page)
                 Sender -> Cache : cache_insert(addr, full_page)
                 Sender -> Cache : overflows++
             end
         else MISS
-            note over Sender: first time on this channel
-            Sender -> Meta : clear_bit(i, xbzrle_bitmap) ← 0
+            note over Sender #FFECB3
+                **First time on this channel**
+            end note
+            Sender -> Meta : clear_bit(i, xbzrle_bitmap) to 0
             Sender -> Meta : xbzrle_len[i] = PAGE_SIZE
-            Sender -> Sender : memcpy(data_buf ← full page)
+            Sender -> Sender : memcpy(data_buf, full page)
             Sender -> Cache : cache_insert(addr, full_page)
             Sender -> Cache : cache_misses++
         end
@@ -86,16 +91,23 @@ loop For each page i in normal_pages [0..normal_pages-1]
 end
 
 group #FFF9E6 Proposed: Assemble Extended Packet
-    Sender -> Meta : packet->xbzrle_data_size = total_bytes
-    Sender -> Meta : memcpy bitmap + len[] → header ext area
-    Sender -> Packet : p->flags |= MULTIFLAG_XBZRLE
-    Sender -> Sender : Build iov[0] = header, iov[1] = data
+    Sender -> Packet : p->flags |= MULTIFD_FLAG_NOCOMP | MULTIFD_FLAG_XBZRLE
     Sender -> Packet : multifd_send_fill_packet(p)
+    note over Sender #FFECB3
+        **Fill packet zeroes entire packet buffer**
+    end note
+
+    Sender -> Meta : multifd_send_write_xbzrle_ext(p)
+    note over Sender #FFECB3
+        **Ext metadata is written following by:**
+        Sets: unused32[0] = xbzrle_data_size
+        Copies: bitmap + len[] to header ext area
+    end note
 end
 
-Sender -> IO : qio_channel_writev_all(iov)
+Sender -> IO : qio_channel_writev_all(iov = [packet_header | data_buf])
 
-note over IO #Yellow
+note over IO #FFECB3
     **Wire format:**
     [Extended MultiFDPacket_t header]
     [xbzrle_bitmap + xbzrle_len[]]
