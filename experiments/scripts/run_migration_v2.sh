@@ -53,12 +53,25 @@ printf 'migrate_set_parameter max-bandwidth 10M\n' | nc -q1 $DST
 # ── Codec / channel setup ─────────────────────────────────────────────────────
 case "$CODEC" in
     xbzrle)
-        # XBZRLE: single-channel precopy compression — no multifd
-        printf 'migrate_set_capability xbzrle on\n'              | nc -q1 $SRC
-        printf 'migrate_set_parameter xbzrle-cache-size 64M\n'   | nc -q1 $SRC
-        printf 'migrate_set_capability xbzrle on\n'              | nc -q1 $DST
-        printf 'migrate_set_parameter xbzrle-cache-size 64M\n'   | nc -q1 $DST
-        echo "XBZRLE enabled, cache=64M, multifd=off" | tee -a "$OUT"
+	# For proposed xbzlre 
+        if [ "$CHANNELS" -gt 0 ]; then
+            echo "PROPOSED MODE: Enabling both multifd ($CHANNELS channels) and XBZRLE" | tee -a "$OUT"
+            for MONITOR in "$SRC" "$DST"; do
+                # Kích hoạt cả 2 capabilities cùng lúc
+                printf 'migrate_set_capability multifd on\n'                      | nc -q1 $MONITOR
+                printf 'migrate_set_capability xbzrle on\n'                       | nc -q1 $MONITOR
+                printf "migrate_set_parameter multifd-channels ${CHANNELS}\n"     | nc -q1 $MONITOR
+                # Đặt cache size cho XBZRLE
+                printf 'migrate_set_parameter xbzrle-cache-size 64M\n'   | nc -q1 $MONITOR
+            done
+	# QEMU upstream only
+        else
+            printf 'migrate_set_capability xbzrle on\n'              | nc -q1 $SRC
+            printf 'migrate_set_parameter xbzrle-cache-size 64M\n'   | nc -q1 $SRC
+            printf 'migrate_set_capability xbzrle on\n'              | nc -q1 $DST
+            printf 'migrate_set_parameter xbzrle-cache-size 64M\n'   | nc -q1 $DST
+            echo "XBZRLE enabled, cache=64M, multifd=off" | tee -a "$OUT"
+        fi
         ;;
     zstd|zlib)
         # zstd/zlib: multifd compression codecs — require channels >= 1
